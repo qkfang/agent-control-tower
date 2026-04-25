@@ -156,6 +156,7 @@ module webApp 'webapp.bicep' = {
       ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
       AZURE_AI_PROJECT_ENDPOINT: azureFoundry.outputs.projectEndpoint
       AZURE_AI_MODEL_DEPLOYMENT_NAME: azureFoundry.outputs.deploymentName
+      AZURE_TENANT_ID: tenant().tenantId
     }
     appCommandLine: 'dotnet agentct.dll'
   }
