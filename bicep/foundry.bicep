@@ -1,8 +1,6 @@
 param name string
 param location string
 param tags object = {}
-param aiSearchEndpoint string = ''
-param aiSearchResourceId string = ''
 
 resource aiHub 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
   name: name
@@ -36,7 +34,7 @@ resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = 
   properties: {}
 }
 
-resource gpt5oDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+resource gpt4oDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
   parent: aiHub
   name: 'gpt-4o'
   sku: {
@@ -55,39 +53,10 @@ resource gpt5oDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
 }
 
 
-resource aiSearchConnection 'Microsoft.CognitiveServices/accounts/connections@2025-10-01-preview' = if (aiSearchEndpoint != '') {
-  parent: aiHub
-  name: 'ai-search-connection'
-  properties: {
-    authType: 'AAD'
-    category: 'CognitiveSearch'
-    target: aiSearchEndpoint
-    metadata: {
-      type: 'azure_ai_search'
-      ResourceId: aiSearchResourceId
-    }
-  }
-}
-
-resource aiSearchProjectConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-10-01-preview' = if (aiSearchEndpoint != '') {
-  parent: aiProject
-  name: 'ai-search-connection-project'
-  properties: {
-    authType: 'AAD'
-    category: 'CognitiveSearch'
-    target: aiSearchEndpoint
-    metadata: {
-      type: 'azure_ai_search'
-      ResourceId: aiSearchResourceId
-    }
-  }
-}
-
 output accountName string = aiHub.name
 output resourceId string = aiHub.id
-output endpoint string = '${aiHub.properties.endpoint}api/projects/${aiProject.name}'
-output deploymentName string = gpt5oDeployment.name
 output projectName string = aiProject.name
+output projectEndpoint string = '${aiHub.properties.endpoint}api/projects/${aiProject.name}'
+output deploymentName string = gpt4oDeployment.name
 output location string = location
 output principalId string = aiHub.identity.principalId
-output aiSearchConnectionName string = aiSearchEndpoint != '' ? aiSearchConnection.name : ''

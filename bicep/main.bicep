@@ -116,15 +116,20 @@ resource foundryAccount 'Microsoft.CognitiveServices/accounts@2025-10-01-preview
   dependsOn: [azureFoundry]
 }
 
-// ── Foundry diagnostic settings → Log Analytics ───────────────────────────────
+// ── Foundry diagnostic settings → Log Analytics + Storage ────────────────────
 resource foundryDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'send-to-law'
   scope: foundryAccount
   properties: {
     workspaceId: logAnalyticsWorkspace.id
+    storageAccountId: storageAccount.id
     logs: [
       {
         categoryGroup: 'allLogs'
+        enabled: true
+      }
+      {
+        categoryGroup: 'audit'
         enabled: true
       }
     ]
@@ -149,7 +154,7 @@ module webApp 'webapp.bicep' = {
     appSettings: {
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
       ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
-      AZURE_AI_PROJECT_ENDPOINT: azureFoundry.outputs.endpoint
+      AZURE_AI_PROJECT_ENDPOINT: azureFoundry.outputs.projectEndpoint
       AZURE_AI_MODEL_DEPLOYMENT_NAME: azureFoundry.outputs.deploymentName
     }
     appCommandLine: 'dotnet agentct.dll'
@@ -218,6 +223,26 @@ resource webAppOpenAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-0
   }
 }
 
+resource webAppAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(foundryAccount.id, resourceId('Microsoft.Web/sites', webAppName), azureAIUserRoleId)
+  scope: foundryAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureAIUserRoleId)
+    principalId: webApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource webAppAIDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(foundryAccount.id, resourceId('Microsoft.Web/sites', webAppName), azureAIDeveloperRoleId)
+  scope: foundryAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureAIDeveloperRoleId)
+    principalId: webApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // ── Role assignments: Azure AI User → principals ─────────────────────────────
 resource userAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
   name: guid(foundryAccount.id, principal.id, azureAIUserRoleId)
@@ -281,14 +306,3 @@ module fabricCapacity 'modules/fabric.bicep' = {
   }
 }
 
-
-
-// ── Outputs ──────────────────────────────────────────────────────────────────
-output foundryEndpoint string = azureFoundry.outputs.endpoint
-output foundryDeploymentName string = azureFoundry.outputs.deploymentName
-output storageAccountName string = storageAccount.name
-output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
-output appInsightsConnectionString string = appInsights.properties.ConnectionString
-output webAppName string = webApp.outputs.name
-output webAppUrl string = 'https://${webApp.outputs.defaultHostName}'
-output fabricCapacityName string = fabricCapacity.name
