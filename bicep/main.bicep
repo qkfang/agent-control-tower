@@ -98,6 +98,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
 }
 
 
+
 // ── AI Foundry ───────────────────────────────────────────────────────────────
 module azureFoundry 'foundry.bicep' = {
   name: 'foundryDeployment'
@@ -207,20 +208,23 @@ resource webAppOpenAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-0
 
 
 // ── Microsoft Fabric Capacity ────────────────────────────────────────────────
-resource fabricCapacity 'Microsoft.Fabric/capacities@2023-11-01' = {
-  name: fabricCapacityName
-  location: location
-  tags: commonTags
-  sku: {
-    name: 'F2'
-    tier: 'Fabric'
-  }
-  properties: {
-    administration: {
-      members: []
-    }
+
+// ── Fabric Capacity ─────────────────────────────────────────────────────────
+module fabricCapacity 'modules/fabric.bicep' = {
+  name: 'fabricCapacityDeployment'
+  params: {
+    name: fabricCapacityName
+    location: location
+    tags: commonTags
+    adminMembers: concat(
+      [
+        'danielfang@MngEnvMCAP951655.onmicrosoft.com'
+        'fabric@MngEnvMCAP951655.onmicrosoft.com'
+      ]
+    )
   }
 }
+
 
 
 // ── Outputs ──────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 
-az group create --name 'rg-agentct' --location 'australiaeast'
+az group create --name 'rg-agentctt' --location 'australiaeast'
 
-az deployment group create --name 'agentct-dev' --resource-group 'rg-agentct' --template-file './main.bicep' --parameters './main.bicepparam'
+az deployment group create --name 'agentctt-dev' --resource-group 'rg-agentctt' --template-file './main.bicep' --parameters './main.bicepparam'
 
 
