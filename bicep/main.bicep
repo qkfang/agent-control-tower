@@ -152,6 +152,7 @@ module webApp 'webapp.bicep' = {
       AZURE_AI_PROJECT_ENDPOINT: azureFoundry.outputs.endpoint
       AZURE_AI_MODEL_DEPLOYMENT_NAME: azureFoundry.outputs.deploymentName
     }
+    appCommandLine: 'dotnet agentct.dll'
   }
 }
 
