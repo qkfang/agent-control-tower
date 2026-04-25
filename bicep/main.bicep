@@ -15,7 +15,8 @@ var logAnalyticsName = '${baseName}-law'
 var appInsightsName = '${baseName}-ai'
 var appServicePlanName = '${baseName}-asp'
 var webAppName = '${baseName}-web'
-
+var fabricCapacityName = '${baseName}fabric'
+  
 
 // ── Storage Account ──────────────────────────────────────────────────────────
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
@@ -205,6 +206,23 @@ resource webAppOpenAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-0
 }
 
 
+// ── Microsoft Fabric Capacity ────────────────────────────────────────────────
+resource fabricCapacity 'Microsoft.Fabric/capacities@2023-11-01' = {
+  name: fabricCapacityName
+  location: location
+  tags: commonTags
+  sku: {
+    name: 'F2'
+    tier: 'Fabric'
+  }
+  properties: {
+    administration: {
+      members: []
+    }
+  }
+}
+
+
 // ── Outputs ──────────────────────────────────────────────────────────────────
 output foundryEndpoint string = azureFoundry.outputs.endpoint
 output foundryDeploymentName string = azureFoundry.outputs.deploymentName
@@ -213,3 +231,4 @@ output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
 output appInsightsConnectionString string = appInsights.properties.ConnectionString
 output webAppName string = webApp.name
 output webAppUrl string = 'https://${webApp.properties.defaultHostName}'
+output fabricCapacityName string = fabricCapacity.name

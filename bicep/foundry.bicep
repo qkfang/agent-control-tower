@@ -47,29 +47,13 @@ resource gpt5oDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
     model: {
       format: 'OpenAI'
       name: 'gpt-4o'
-      version: '2026-03-05'
+      version: '2024-11-20'
     }
     versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
     raiPolicyName: 'Microsoft.DefaultV2'
   }
 }
 
-resource f2CapacityPlan 'Microsoft.CognitiveServices/accounts/commitmentPlans@2024-10-01' = {
-  parent: aiHub
-  name: 'foundry-f2-capacity'
-  sku: {
-    name: 'F2'
-  }
-  properties: {
-    planType: 'ProvisionedManaged'
-    hostingModel: 'ProvisionedWeb'
-    current: {
-      tier: 'F2'
-      count: 1
-    }
-    autoRenew: true
-  }
-}
 
 resource aiSearchConnection 'Microsoft.CognitiveServices/accounts/connections@2025-10-01-preview' = if (aiSearchEndpoint != '') {
   parent: aiHub
@@ -107,4 +91,3 @@ output projectName string = aiProject.name
 output location string = location
 output principalId string = aiHub.identity.principalId
 output aiSearchConnectionName string = aiSearchEndpoint != '' ? aiSearchConnection.name : ''
-output f2CapacityPlanName string = f2CapacityPlan.name
