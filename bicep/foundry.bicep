@@ -85,7 +85,7 @@ resource aiSearchProjectConnection 'Microsoft.CognitiveServices/accounts/project
 
 output accountName string = aiHub.name
 output resourceId string = aiHub.id
-output endpoint string = aiHub.properties.endpoint
+output endpoint string = '${aiHub.properties.endpoint}api/projects/${aiProject.name}'
 output deploymentName string = gpt5oDeployment.name
 output projectName string = aiProject.name
 output location string = location
