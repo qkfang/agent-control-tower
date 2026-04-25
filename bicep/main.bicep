@@ -110,8 +110,6 @@ module azureFoundry 'foundry.bicep' = {
 }
 
 // ── Role assignments: API App → Foundry ──────────────────────────────────────
-var cognitiveServicesOpenAIUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-
 resource foundryAccount 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' existing = {
   name: foundryName
   dependsOn: [azureFoundry]
@@ -184,6 +182,9 @@ resource webAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
 }
 
 
+var cognitiveServicesOpenAIUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+var azureAIDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'
+
 // ── Role assignments: additional principals ──────────────────────────────────
 resource userOpenAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
   name: guid(foundryAccount.id, principal.id, cognitiveServicesOpenAIUserRoleId)
@@ -205,6 +206,17 @@ resource webAppOpenAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-0
     principalType: 'ServicePrincipal'
   }
 }
+
+// ── Role assignments: Azure AI Developer → principals (agents/write) ─────────
+resource userAIDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
+  name: guid(foundryAccount.id, principal.id, azureAIDeveloperRoleId)
+  scope: foundryAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureAIDeveloperRoleId)
+    principalId: principal.id
+    principalType: principal.principalType
+  }
+}]
 
 
 // ── Microsoft Fabric Capacity ────────────────────────────────────────────────
