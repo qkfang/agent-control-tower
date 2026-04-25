@@ -208,7 +208,7 @@ resource userOpenAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01'
 
 // ── Role assignment: Web App managed identity → Foundry ──────────────────────
 resource webAppOpenAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(foundryAccount.id, webApp.outputs.id, cognitiveServicesOpenAIUserRoleId)
+  name: guid(foundryAccount.id, resourceId('Microsoft.Web/sites', webAppName), cognitiveServicesOpenAIUserRoleId)
   scope: foundryAccount
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesOpenAIUserRoleId)
