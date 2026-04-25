@@ -38,7 +38,7 @@ resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = 
 
 resource gpt5oDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
   parent: aiHub
-  name: 'gpt-5.4'
+  name: 'gpt-4o'
   sku: {
     name: 'GlobalStandard'
     capacity: 1000
@@ -46,11 +46,28 @@ resource gpt5oDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-5.4'
+      name: 'gpt-4o'
       version: '2026-03-05'
     }
     versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
     raiPolicyName: 'Microsoft.DefaultV2'
+  }
+}
+
+resource f2CapacityPlan 'Microsoft.CognitiveServices/accounts/commitmentPlans@2024-10-01' = {
+  parent: aiHub
+  name: 'foundry-f2-capacity'
+  sku: {
+    name: 'F2'
+  }
+  properties: {
+    planType: 'ProvisionedManaged'
+    hostingModel: 'ProvisionedWeb'
+    current: {
+      tier: 'F2'
+      count: 1
+    }
+    autoRenew: true
   }
 }
 
@@ -90,3 +107,4 @@ output projectName string = aiProject.name
 output location string = location
 output principalId string = aiHub.identity.principalId
 output aiSearchConnectionName string = aiSearchEndpoint != '' ? aiSearchConnection.name : ''
+output f2CapacityPlanName string = f2CapacityPlan.name

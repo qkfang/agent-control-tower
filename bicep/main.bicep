@@ -9,7 +9,7 @@ param principals array = []
 
 var commonTags = {
 }
-var foundryName = '${baseName}-fndry'
+var foundryName = '${baseName}-foundry'
 var storageAccountName = replace('${baseName}sa', '-', '')
 var logAnalyticsName = '${baseName}-law'
 var appInsightsName = '${baseName}-ai'
