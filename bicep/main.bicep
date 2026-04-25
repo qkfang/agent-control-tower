@@ -183,6 +183,7 @@ resource webAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
 
 
 var cognitiveServicesOpenAIUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+var azureAIUserRoleId = '53ca6127-db72-4b80-b1b0-d745d6d5456d'
 var azureAIDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'
 
 // ── Role assignments: additional principals ──────────────────────────────────
@@ -206,6 +207,17 @@ resource webAppOpenAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-0
     principalType: 'ServicePrincipal'
   }
 }
+
+// ── Role assignments: Azure AI User → principals ─────────────────────────────
+resource userAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
+  name: guid(foundryAccount.id, principal.id, azureAIUserRoleId)
+  scope: foundryAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureAIUserRoleId)
+    principalId: principal.id
+    principalType: principal.principalType
+  }
+}]
 
 // ── Role assignments: Azure AI Developer → principals (agents/write) ─────────
 resource userAIDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
