@@ -56,7 +56,7 @@ resource gpt4oDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
 output accountName string = aiHub.name
 output resourceId string = aiHub.id
 output projectName string = aiProject.name
-output projectEndpoint string = '${aiHub.properties.endpoint}api/projects/${aiProject.name}'
+output projectEndpoint string = aiProject.properties.endpoints['AI Foundry API']
 output deploymentName string = gpt4oDeployment.name
 output location string = location
 output principalId string = aiHub.identity.principalId
