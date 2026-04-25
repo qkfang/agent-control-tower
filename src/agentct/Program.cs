@@ -43,7 +43,9 @@ var webSearchTool = ResponseTool.CreateWebSearchTool();
 var tenantId = app.Configuration["AZURE_TENANT_ID"];
 var defaultCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
 {
-    TenantId = tenantId
+    TenantId = tenantId,
+    ExcludeVisualStudioCodeCredential = true,
+    ExcludeSharedTokenCacheCredential = true
 });
 
 AIProjectClient aiProjectClient = new(new Uri(endpoint), defaultCredential);
