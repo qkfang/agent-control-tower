@@ -1,0 +1,44 @@
+name: 20 Deploy Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/agentct/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/agentct/agentct.csproj
+
+      - name: Build
+        run: dotnet build src/agentct/agentct.csproj --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish src/agentct/agentct.csproj --configuration Release --output ./publish
+
+      - name: Azure CLI Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'agentct-web'
+          package: ./publish

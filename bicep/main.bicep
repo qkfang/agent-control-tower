@@ -14,7 +14,7 @@ var storageAccountName = replace('${baseName}sa', '-', '')
 var logAnalyticsName = '${baseName}-law'
 var appInsightsName = '${baseName}-ai'
 var appServicePlanName = '${baseName}-asp'
-var webAppName = '${baseName}-app'
+var webAppName = '${baseName}-web'
 
 
 // ── Storage Account ──────────────────────────────────────────────────────────
