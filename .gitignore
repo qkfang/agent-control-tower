@@ -1,0 +1,43 @@
+# .NET build output
+bin/
+obj/
+packages/
+*.dll
+*.exe
+*.pdb
+*.nupkg
+*.snupkg
+
+# NuGet
+*.nuget.props
+*.nuget.targets
+project.assets.json
+project.nuget.cache
+*.nuget.dgspec.json
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.pidb
+*.sln.docstates
+
+# Publish output
+publish/
+out/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Node / frontend
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db

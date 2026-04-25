@@ -1,0 +1,32 @@
+name: 10 Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "bicep/**"
+  workflow_dispatch:
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure CLI Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    #   - name: Create Resource Group
+    #     run: az group create --name 'rg-agentct' --location 'eastus2'
+
+      - name: Deploy Bicep
+        working-directory: bicep
+        run: |
+          az deployment group create \
+            --name 'agentct-dev' \
+            --resource-group 'rg-agentct' \
+            --template-file './main.bicep' \
+            --parameters './parameters.dev.json'
