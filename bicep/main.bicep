@@ -31,7 +31,12 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     accessTier: 'Hot'
     supportsHttpsTrafficOnly: true
     minimumTlsVersion: 'TLS1_2'
-    allowBlobPublicAccess: false
+    allowBlobPublicAccess: true // poc only
+    publicNetworkAccess: 'Enabled' // poc only
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Allow'
+    }
   }
 }
 
@@ -49,23 +54,33 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
   }
 }
 
-resource logAnalyticsDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: 'send-to-storage'
-  scope: logAnalyticsWorkspace
+// ── Log Analytics Data Export → Storage Account ──────────────────────────────
+resource logAnalyticsDataExport 'Microsoft.OperationalInsights/workspaces/dataExports@2023-09-01' = {
+  parent: logAnalyticsWorkspace
+  name: 'export-to-storage'
   properties: {
-    storageAccountId: storageAccount.id
-    logs: [
-      {
-        categoryGroup: 'allLogs'
-        enabled: true
-      }
+    destination: {
+      resourceId: storageAccount.id
+    }
+    tableNames: [
+      'AppRequests'
+      'AppDependencies'
+      'AppExceptions'
+      'AppTraces'
+      'AppEvents'
+      'AppPageViews'
+      'AppPerformanceCounters'
+      'AppAvailabilityResults'
+      'AppBrowserTimings'
+      'AppSystemEvents'
+      'AppMetrics'
+      'AppServiceHTTPLogs'
+      'AppServiceConsoleLogs'
+      'AppServiceAppLogs'
+      'AzureDiagnostics'
+      'AzureMetrics'
     ]
-    metrics: [
-      {
-        category: 'AllMetrics'
-        enabled: true
-      }
-    ]
+    enable: true
   }
 }
 
@@ -201,6 +216,7 @@ resource webAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
 var cognitiveServicesOpenAIUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 var azureAIUserRoleId = '53ca6127-db72-4b80-b1b0-d745d6d5456d'
 var azureAIDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'
+var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
 // ── Role assignments: additional principals ──────────────────────────────────
 resource userOpenAIUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
@@ -266,30 +282,18 @@ resource userAIDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-04-01
   }
 }]
 
-// // ── Role assignments: Storage Blob Data Contributor → principals ──────────────
-// resource userStorageBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
-//   name: guid(storageAccount.id, principal.id, storageBlobDataContributorRoleId)
-//   scope: storageAccount
-//   properties: {
-//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
-//     principalId: principal.id
-//     principalType: principal.principalType
-//   }
-// }]
-
-// // ── Role assignment: Web App managed identity → Storage Blob Data Contributor ─
-// resource webAppStorageBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-//   name: guid(storageAccount.id, webApp.id, storageBlobDataContributorRoleId)
-//   scope: storageAccount
-//   properties: {
-//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
-//     principalId: webApp.identity.principalId
-//     principalType: 'ServicePrincipal'
-//   }
-// }
+// ── Role assignments: Storage Blob Data Contributor → principals ──────────────
+resource userStorageBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
+  name: guid(storageAccount.id, principal.id, storageBlobDataContributorRoleId)
+  scope: storageAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
+    principalId: principal.id
+    principalType: principal.principalType
+  }
+}]
 
 
-// ── Microsoft Fabric Capacity ────────────────────────────────────────────────
 
 // ── Fabric Capacity ─────────────────────────────────────────────────────────
 module fabricCapacity 'modules/fabric.bicep' = {
