@@ -84,6 +84,34 @@
         button:hover:not(:disabled) { background: #3a65d6; }
         button:disabled { background: #a5b4fc; cursor: not-allowed; }
 
+        .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+        .btn-sim {
+            background: #10b981;
+        }
+        .btn-sim:hover:not(:disabled) { background: #059669; }
+        .btn-sim.running { background: #dc2626; }
+        .btn-sim.running:hover:not(:disabled) { background: #b91c1c; }
+
+        .sim-log {
+            margin-top: 18px;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 6px;
+            padding: 12px 14px;
+            font-family: ui-monospace, Menlo, Consolas, monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            display: none;
+        }
+        .sim-log.visible { display: block; }
+        .sim-log .row { padding: 2px 0; border-bottom: 1px solid #1e293b; }
+        .sim-log .agent { color: #38bdf8; font-weight: 600; }
+        .sim-log .ok { color: #4ade80; }
+        .sim-log .err { color: #f87171; }
+
         .response-box {
             margin-top: 24px;
             border-top: 1px solid #e5e7eb;
@@ -144,12 +172,17 @@
         <label for="prompt-input">Prompt</label>
         <textarea id="prompt-input" placeholder="Type your question here..."></textarea>
 
-        <button id="send-btn" onclick="sendPrompt()">Send</button>
+        <div class="btn-row">
+            <button id="send-btn" onclick="sendPrompt()">Send</button>
+            <button id="sim-btn" class="btn-sim" onclick="toggleSim()">Start Sim</button>
+        </div>
 
         <div class="response-box" id="response-box">
             <div class="response-label">Response</div>
             <div class="response-text" id="response-text"></div>
         </div>
+
+        <div class="sim-log" id="sim-log"></div>
     </div>
 
     <script>
@@ -195,6 +228,89 @@
                 sendPrompt();
             }
         });
+
+        const SIM_AGENTS = ['support', 'doc', 'customer'];
+        const SIM_PROMPTS = [
+            'How do I reset my password?',
+            'What are your business hours?',
+            'Where can I find the user guide?',
+            'My order has not arrived yet.',
+            'Can you explain the refund policy?',
+            'How do I upgrade my subscription?',
+            'I need help configuring my account.',
+            'What features are included in the free tier?',
+            'How do I contact a human agent?',
+            'Show me the latest release notes.',
+            'I am getting an error when logging in.',
+            'Can you summarize the onboarding steps?'
+        ];
+        const SIM_MIN_DELAY_MS = 1500;
+        const SIM_MAX_DELAY_MS = 4500;
+
+        let simRunning = false;
+        let simTimer = null;
+
+        function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+        function logSim(agent, prompt, status, detail) {
+            const log = document.getElementById('sim-log');
+            log.classList.add('visible');
+            const row = document.createElement('div');
+            row.className = 'row';
+            const time = new Date().toLocaleTimeString();
+            const cls = status === 'ok' ? 'ok' : status === 'err' ? 'err' : '';
+            row.innerHTML = `[${time}] <span class="agent">${agent}</span> "${prompt}" <span class="${cls}">${detail}</span>`;
+            log.prepend(row);
+        }
+
+        async function fireSim() {
+            const agent = pick(SIM_AGENTS);
+            const prompt = pick(SIM_PROMPTS);
+            const started = performance.now();
+            try {
+                const res = await fetch(`/${agent}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: prompt })
+                });
+                const elapsed = Math.round(performance.now() - started);
+                if (!res.ok) {
+                    logSim(agent, prompt, 'err', `HTTP ${res.status} (${elapsed}ms)`);
+                    return;
+                }
+                const data = await res.json().catch(() => null);
+                const reply = (data && (data.response ?? JSON.stringify(data))) || '(empty)';
+                const snippet = reply.length > 160 ? reply.slice(0, 160) + '…' : reply;
+                logSim(agent, prompt, 'ok', `${elapsed}ms → ${snippet}`);
+            } catch (err) {
+                logSim(agent, prompt, 'err', err.message);
+            }
+        }
+
+        function scheduleSim() {
+            if (!simRunning) return;
+            const delay = SIM_MIN_DELAY_MS + Math.random() * (SIM_MAX_DELAY_MS - SIM_MIN_DELAY_MS);
+            simTimer = setTimeout(async () => {
+                if (!simRunning) return;
+                fireSim();
+                scheduleSim();
+            }, delay);
+        }
+
+        function toggleSim() {
+            const btn = document.getElementById('sim-btn');
+            simRunning = !simRunning;
+            if (simRunning) {
+                btn.textContent = 'Stop Sim';
+                btn.classList.add('running');
+                fireSim();
+                scheduleSim();
+            } else {
+                btn.textContent = 'Start Sim';
+                btn.classList.remove('running');
+                if (simTimer) { clearTimeout(simTimer); simTimer = null; }
+            }
+        }
     </script>
 </body>
 </html>

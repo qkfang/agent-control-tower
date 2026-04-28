@@ -4,10 +4,22 @@ using Azure.Identity;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using FxAgent.Agents;
 using OpenAI.Responses;
+using OpenTelemetry.Instrumentation.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenTelemetry().UseAzureMonitor();
+
+// Exclude Live Metrics (QuickPulse) calls from telemetry to avoid self-tracking noise
+builder.Services.Configure<HttpClientTraceInstrumentationOptions>(options =>
+{
+    options.FilterHttpRequestMessage = req =>
+    {
+        var host = req.RequestUri?.Host;
+        if (string.IsNullOrEmpty(host)) return true;
+        return !host.EndsWith("livediagnostics.monitor.azure.com", StringComparison.OrdinalIgnoreCase);
+    };
+});
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();

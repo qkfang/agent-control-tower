@@ -8,6 +8,7 @@ param location string = 'australiaeast'
 param principals array = []
 
 var commonTags = {
+  
 }
 var foundryName = '${baseName}-foundry'
 var storageAccountName = replace('${baseName}sa', '-', '')
@@ -137,7 +138,6 @@ resource foundryDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pr
   scope: foundryAccount
   properties: {
     workspaceId: logAnalyticsWorkspace.id
-    storageAccountId: storageAccount.id
     logs: [
       {
         categoryGroup: 'allLogs'
