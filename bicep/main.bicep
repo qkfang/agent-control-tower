@@ -12,6 +12,7 @@ var commonTags = {
 }
 var foundryName = '${baseName}-foundry'
 var storageAccountName = replace('${baseName}sa', '-', '')
+var storageAccountBName = replace('${baseName}sab', '-', '')
 var logAnalyticsName = '${baseName}-law'
 var appInsightsName = '${baseName}-ai'
 var appServicePlanName = '${baseName}-asp'
@@ -41,6 +42,29 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   }
 }
 
+// ── Storage Account B (ADLS Gen2 / HNS enabled) ──────────────────────────────
+resource storageAccountB 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: storageAccountBName
+  location: location
+  tags: commonTags
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    accessTier: 'Hot'
+    isHnsEnabled: true
+    supportsHttpsTrafficOnly: true
+    minimumTlsVersion: 'TLS1_2'
+    allowBlobPublicAccess: true // poc only
+    publicNetworkAccess: 'Enabled' // poc only
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Allow'
+    }
+  }
+}
+
 
 // ── Log Analytics Workspace ──────────────────────────────────────────────────
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -55,7 +79,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
   }
 }
 
-// ── Log Analytics Data Export → Storage Account ──────────────────────────────
+// ── Log Analytics Data Export → Storage Account (HNS) ───────────────────────
 resource logAnalyticsDataExport 'Microsoft.OperationalInsights/workspaces/dataExports@2023-09-01' = {
   parent: logAnalyticsWorkspace
   name: 'export-to-storage'
@@ -286,6 +310,16 @@ resource userAIDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-04-01
 resource userStorageBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
   name: guid(storageAccount.id, principal.id, storageBlobDataContributorRoleId)
   scope: storageAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
+    principalId: principal.id
+    principalType: principal.principalType
+  }
+}]
+
+resource userStorageBlobRoleB 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
+  name: guid(storageAccountB.id, principal.id, storageBlobDataContributorRoleId)
+  scope: storageAccountB
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
     principalId: principal.id
